@@ -1,36 +1,37 @@
-# Producer-Consumer Problem
+# Simulated File System Project
 
 ## Building
 
 **Command line:**
 
-- `make` to build. An executable called `pc` will be produced.
+- `make` to build the project. This will produce an executable called `testfs`.
+- `make test` to build and run the project. Produces and executes `testfs`
 
 ## Using the executable:
 
-To run the program:
+To run the simulation:
 
-- `num_producers`: Number of producers (threads) generating events.
-- `num_consumers`: Number of consumers (threads) consuming events.
-- `num_events`: Number of events each producer will generate.
-- `max_outstanding`: Maximum number of outstanding (produced but not yet consumed) events allowed at a time.
+- The executable does not require command line arguments but relies on a predefined test image file named `test.img`.
 
-**Example:** `./pc 2 4 5 2`
+**Example:** `./testfs`
 
-This command runs the program with 2 producers and 4 consumers. Each producer generates 5 events, and the system allows a maximum of 2 events outstanding at a time.
+This command runs the program which tests the functionality of opening, writing to, reading from, and closing a simulated file system image.
 
 ## Files
 
-- `pc.c`: Main program source file that includes the producer and consumer logic.
-- `eventbuf.c`: Contains the definitions of functions to manage event buffers.
-- `eventbuf.h`: Header file for `eventbuf.c`.
-- `Makefile`: File which builds the executable.
+- `testfs.c`: Main program source file that includes tests for file system operations.
+- `block.c`: Contains the definitions of functions to manage data blocks within the file system image.
+- `block.h`: Header file for `block.c` with function declarations and constants.
+- `image.c`: Manages the file system image file including opening and closing operations.
+- `image.h`: Header file for `image.c` which includes function declarations and the file descriptor.
+- `Makefile`: File which builds the executable and handles cleaning operations.
 
 ## Data
 
-This program uses a FIFO queue (`eventbuf`) to manage events:
+This program simulates file system operations by manipulating data blocks within a single large file (`test.img`), mimicking the behavior of a block-based file system:
 
-- Events are integers uniquely identified by `producer_number * 100 + event_number`.
+- Data is managed in blocks of 4096 bytes.
+- Each operation on blocks is encapsulated through the `block.c` implementations.
 
 ## Functions
 
@@ -38,35 +39,31 @@ This program uses a FIFO queue (`eventbuf`) to manage events:
 
 ### `main()`
 
-- Initializes semaphores and event buffer.
-- Creates and starts producer and consumer threads.
-- Waits for all threads to complete and cleans up resources.
+- Executes a series of file system operations including opening, writing to, reading from, and closing the file system image.
+- Validates the correctness of each operation and prints test results.
 
-### `producer(void *param)`
+### `image_open(char *filename, int truncate)`
 
-- Produces events and adds them to the event buffer.
-- Uses semaphores to manage access to the buffer and coordinate with consumers.
+- Opens or creates (with optional truncation) the file system image file.
 
-### `consumer(void *param)`
+### `image_close()`
 
-- Consumes events from the event buffer as they become available.
-- Uses semaphores to synchronize access to the buffer with producers.
+- Closes the file system image file.
 
-### Event Buffer Functions (`eventbuf.h`)
+### `bwrite(int block_num, unsigned char *block)`
 
-- `eventbuf_create()`: Creates and initializes a new event buffer.
-- `eventbuf_free()`: Frees the event buffer.
-- `eventbuf_add()`: Adds a new event to the buffer.
-- `eventbuf_get()`: Retrieves and removes an event from the buffer.
-- `eventbuf_empty()`: Checks if the buffer is empty.
+- Writes a block of data to a specified block number in the file system image.
 
-## Synchronization
+### `bread(int block_num, unsigned char *block)`
 
-- The system uses three semaphores:
-  - `mutex`: Ensures mutual exclusion for access to the event buffer.
-  - `items`: Counts the number of items (events) in the buffer.
-  - `spaces`: Counts the number of available spaces in the buffer for new events.
+- Reads a block of data from a specified block number in the file system image.
 
 ## Notes
 
-- The project simulates a producer-consumer scenario using threads and semaphores, which is useful in understanding synchronization in operating systems and concurrent programming.
+- The project serves as a basic demonstration of how file system operations like block reading and writing can be simulated in user space.
+- This simulation helps in understanding the lower-level workings of file systems without the need to interact directly with disk hardware.
+
+## Cleaning Up
+
+- `make clean`: Removes all compiled object files and temporary files.
+- `make pristine`: Removes all compiled object files, the executable, and static libraries (`libvvsfs.a`), ensuring a clean state for a complete rebuild.
